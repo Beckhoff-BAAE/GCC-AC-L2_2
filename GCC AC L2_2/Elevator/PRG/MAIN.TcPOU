@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="MAIN" Id="{437c88b0-71cb-4e07-9d72-857c04460bf1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	//Elevator:FB_Elevator;
+	//Floors:ARRAY[1..4]	OF	ST_Floor;
+	State: E_States;
+	i: INT;
+	//RequestedFloor: INT;
+	//ActualFloor: INT;
+	Trigger:ARRAY[1..4]	OF	R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE	State	OF
+	E_States.Call:
+		FOR	i:=1	TO	4	DO
+			IF	Floors[i].Call	THEN
+				RequestedFloor:=i;
+			END_IF
+		END_FOR
+		
+		IF	RequestedFloor>ActualFloor	THEN
+			State:=E_States.MoveUp;	
+		ELSIF	RequestedFloor<ActualFloor	THEN
+			State:=E_States.MoveDown;	
+		END_IF
+	E_States.MoveUp:
+		Elevator.MoveUp();
+		FOR	i:=1	TO	4	DO
+			Trigger[i](clk:=Floors[i].Low);
+			IF	Trigger[i].Q	THEN
+				ActualFloor:=ActualFloor+1;
+			END_IF
+		END_FOR
+		
+		IF	ActualFloor=RequestedFloor	THEN
+			State:=E_States.SlowDown;
+		END_IF
+	E_States.MoveDown:
+		Elevator.MoveDown();
+		FOR	i:=1	TO	4	DO
+			Trigger[i](clk:=Floors[i].High);
+			IF	Trigger[i].Q	THEN
+				ActualFloor:=ActualFloor-1;
+			END_IF
+		END_FOR
+		
+		IF	ActualFloor=RequestedFloor	THEN
+			State:=E_States.SlowDown;
+		END_IF
+		
+	E_States.SlowDown:
+		Elevator.SlowDown();
+		FOR	i:=1	TO	4	DO
+			IF	Floors[i].Mid	THEN
+				State:=E_States.Stop;
+			END_IF
+		END_FOR
+	E_States.Stop:
+		Elevator.Stop();
+		State:=E_States.Call;
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="32" Count="1" />
+      <LineId Id="36" Count="3" />
+      <LineId Id="42" Count="1" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="44" Count="2" />
+      <LineId Id="49" Count="2" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="70" Count="9" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="61" Count="2" />
+      <LineId Id="65" Count="1" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
